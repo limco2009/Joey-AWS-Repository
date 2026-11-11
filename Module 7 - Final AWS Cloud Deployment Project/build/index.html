@@ -188,9 +188,40 @@
   <footer>
     <div class="container">
       <p>Jesus Joey A. Lim · <a href="mailto:mylimco@yahoo.com">mylimco@yahoo.com</a> · +63 927 081 8924</p>
+      <p> Website View Count: <span id="view-count" class="view-count">Loading views...</span></p>
+      
     </div>
   </footer>
+  <script>
+    const functionUrl = 'https://ygi6oc67uos4ume4jcc7gmw54a0syenn.lambda-url.us-east-1.on.aws/';
+
+    async function fetchViewCount() {
+      // If your HTML is <span id="view-count"></span>
+      const viewCountElement = document.getElementById('view-count'); // ID matches exactly
+
+      if (!viewCountElement) {
+        console.error('view-count element not found');
+        return;
+      }
+
+      try {
+        const response = await fetch(functionUrl);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+
+        // Display the view count on the page
+        viewCountElement.textContent = data.views ?? 0;
+
+        } catch (error) {
+        console.error('Error fetching view count:', error);
+        viewCountElement.textContent = 'error';
+      }
+    }
+
+    // Run when the page loads
+    window.addEventListener('load', fetchViewCount);
+  </script>
 </body>
 </html>
-
-
