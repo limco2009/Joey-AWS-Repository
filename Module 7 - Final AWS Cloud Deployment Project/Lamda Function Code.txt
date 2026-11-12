@@ -1,0 +1,59 @@
+import json
+import boto3
+from decimal import Decimal
+
+# Initialize the DynamoDB resource specifically for the us-east-1 region
+dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
+
+# Fetch the table name from your Lambda's environment variables
+table = dynamodb.Table('MyResumeViewCounts')
+
+def decimal_default(obj):
+    # FIXED: Changed 'decimal.Decimal' to 'Decimal' to match your import statement
+    if isinstance(obj, Decimal):
+        return int(obj) # Returns int instead of float
+    raise TypeError
+
+def lambda_handler(event, context):
+    print("Received Event:", json.dumps(event, indent=2)) # Debugging
+
+    try:
+        # Check if Function URL sends 'requestContext' differently
+        http_method = event.get("httpMethod") or event.get("requestContext", {}).get('http', {}).get('method', 'GET')
+        
+        if http_method == 'GET':
+            # Update view count directly in DynamoDB 
+            response = table.update_item(
+                Key={'id': 'views'}, # FIXED: Capitalized 'Key' per boto3 syntax
+                UpdateExpression="SET #c = if_not_exists(#c, :start) + :inc",
+                ExpressionAttributeNames={"#c": "count"}, # Avoid reserved keyword
+                ExpressionAttributeValues={":inc": 1, ":start": 0}, # FIXED: Added missing 'x'
+                ReturnValues="UPDATED_NEW" 
+            )
+            
+            # Get the updated view count from the response
+            views_count = response['Attributes']['count']
+
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    # CORS header removed here because AWS Function URL settings handle it
+                },
+                'body': json.dumps({'views': views_count}, default=decimal_default)
+            }
+        
+        # FIXED: Properly un-indented out of the GET block to catch non-GET requests
+        return {
+            'statusCode': 400,
+            'body': json.dumps({'error': 'Invalid HTTP method'})
+        }
+        
+    # FIXED: Corrected indentation for the except block so it aligns with the try block
+    except Exception as e:
+        print(f"Error occurred: {str(e)}") # Log the error to CloudWatch
+        return {
+            'statusCode': 500, 
+            'headers': {'Content-Type': 'application/json'},
+            'body': json.dumps({'error': str(e)})
+        }
