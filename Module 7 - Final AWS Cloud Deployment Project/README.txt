@@ -1,2 +1,1 @@
-This repository is a mix of terraform code and AWS console approach to build this project. This is just the initial version and I plan to build 
-another repository to build this project using purely Terraform code(IaC).
+This repository is a mix of terraform code and AWS console approach to build this project. This is just the initial version. I plan to build/add in this repository to build the same project using purely Infrastructure as a Code.
